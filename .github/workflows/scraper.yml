@@ -2,15 +2,15 @@ name: Weekly Scraper
 
 on:
   schedule:
-    - cron: '0 0 * * 1'   # 毎週月曜 0:00 UTC に実行（必要に応じて調整）
+    - cron: '0 0 * * 1'   # 毎週月曜 0:00 UTC に実行
   workflow_dispatch:      # 手動実行も可能
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
-      - name: リポジトリのチェックアウト
-        uses: actions/checkout@v3
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
 
       - name: Pythonのセットアップ
         uses: actions/setup-python@v4
@@ -25,8 +25,35 @@ jobs:
       - name: スクレイパーの実行
         run: python scraper.py
 
-      - name: CSV成果物のアップロード
-        uses: actions/upload-artifact@v4.6.1
+      - name: 途中経過のCSVをアップロード
+        uses: actions/upload-artifact@v4
         with:
-          name: scraped-data
+          name: scraped-data-${{ github.run_id }}
           path: data.csv
+
+  merge_csv:
+    needs: scrape
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Pythonのセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: すべてのデータをダウンロード
+        uses: actions/download-artifact@v4
+        with:
+          path: merged_data
+
+      - name: CSV結合スクリプトを実行
+        run: |
+          python merge_csv.py
+
+      - name: 統合後のデータをアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-scraped-data
+          path: final_data.csv
