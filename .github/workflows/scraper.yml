@@ -51,7 +51,13 @@ jobs:
       - name: すべてのデータをダウンロード
         uses: actions/download-artifact@v4
         with:
+          name: scraped-data-partial   # ← アップロード時と同じ名前
           path: merged_data
+
+      - name: デバッグ(merged_dataディレクトリの中身を確認)
+        run: |
+          echo "Check merged_data directory:"
+          ls -R merged_data
 
       - name: CSV結合スクリプトを実行
         run: python merge_csv.py

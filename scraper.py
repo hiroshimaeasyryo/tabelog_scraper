@@ -5,6 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 # 実行開始時間を記録
@@ -54,21 +56,41 @@ def scrape_detail_page_with_retry(url, max_retries=15):
 
             record = {'URL': url, '店名': '', 'ジャンル': '', '予約・お問い合わせ': '', '住所': ''}
             try:
-                record['店名'] = driver.find_element(By.XPATH, '//th[normalize-space()="店名"]/following-sibling::td//span').text.strip()
+                store_name = WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="店名"]/following-sibling::td//span'))
+                )
+                record['店名'] = store_name.text.strip()
             except:
                 record['店名'] = 'Not Found'
             try:
-                record['ジャンル'] = driver.find_element(By.XPATH, '//th[normalize-space()="ジャンル"]/following-sibling::td//span').text.strip()
+                genre = WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="ジャンル"]/following-sibling::td//span'))
+                )
+                record['ジャンル'] = genre.text.strip()
             except:
                 record['ジャンル'] = 'Not Found'
             try:
-                record['予約・お問い合わせ'] = driver.find_element(By.XPATH, '//th[contains(text(),"予約・")]/following-sibling::td').text.strip()
+                reservation = WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located((By.XPATH, '//th[contains(text(),"予約・")]/following-sibling::td'))
+                )
+                record['予約・お問い合わせ'] = reservation.text.strip()
             except:
                 record['予約・お問い合わせ'] = 'Not Found'
             try:
-                record['住所'] = driver.find_element(By.XPATH, '//th[normalize-space()="住所"]/following-sibling::td//p[contains(@class,"rstinfo-table__address")]').text.strip()
+                address = WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="住所"]/following-sibling::td//p[contains(@class,"rstinfo-table__address")]'))
+                )
+                record['住所'] = address.text.strip()
             except:
                 record['住所'] = 'Not Found'
+
+            # 取得した情報を逐一print
+            print(f"URL: {record['URL']}")
+            print(f"店名: {record['店名']}")
+            print(f"ジャンル: {record['ジャンル']}")
+            print(f"予約・お問い合わせ: {record['予約・お問い合わせ']}")
+            print(f"住所: {record['住所']}")
+            print("-" * 40)
 
             driver.quit()
             return record
