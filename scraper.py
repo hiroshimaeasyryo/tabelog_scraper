@@ -56,11 +56,11 @@ def scrape_detail_page_with_retry(url, max_retries=15):
 
             record = {'URL': url, '店名': '', 'ジャンル': '', '予約・お問い合わせ': '', '住所': ''}
 
-            # ページのテキストを取得（タグを除いた純粋なテキスト部分のみ）
-            page_text = driver.find_element(By.TAG_NAME, "body").text
-            print("🔍 ページ全体のテキスト（デバッグ用）:")
-            print(page_text)
-            print("-" * 80)  # 区切り線
+            # ページのHTML全体を取得（タグ含む）
+            page_html = driver.page_source
+            print("📄 ページのHTML（デバッグ用）:")
+            print(page_html)
+            print("=" * 100)  # 区切り線
 
             try:
                 store_name = WebDriverWait(driver, 10).until(
