@@ -11,7 +11,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 start_time = time.time()
 
 # 最大実行時間（秒単位）6時間より少し短く（5時間で保存）
-MAX_EXECUTION_TIME = 5 * 60 * 60  # 5時間 = 18000秒
+# 試験的に短めに設定
+MAX_EXECUTION_TIME = 1 * 10 * 60  # 10分
 
 def init_driver():
     """ヘッドレスChromeのドライバーを初期化"""

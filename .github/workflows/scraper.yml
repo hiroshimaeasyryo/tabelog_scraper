@@ -35,12 +35,24 @@ jobs:
     needs: scrape
     runs-on: ubuntu-latest
     steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Pythonのセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
       - name: すべてのデータをダウンロード
         uses: actions/download-artifact@v4
         with:
           path: merged_data
 
+      - name: 現在のディレクトリを確認
+        run: pwd && ls -l  # デバッグ用: どこで実行されているか確認
+
       - name: CSV結合スクリプトを実行
+        working-directory: /home/runner/work/tabelog_scraper/tabelog_scraper/
         run: python merge_csv.py
 
       - name: 統合後のデータをアップロード
@@ -48,3 +60,4 @@ jobs:
         with:
           name: final-scraped-data
           path: final_data.csv
+        
