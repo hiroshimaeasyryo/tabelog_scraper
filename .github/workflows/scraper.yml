@@ -22,35 +22,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install selenium webdriver-manager pandas
 
-      - name: スクレイパーの実行
+      - name: スクレイパーの実行（途中保存あり）
         run: python scraper.py
 
       - name: 途中経過のCSVをアップロード
         uses: actions/upload-artifact@v4
         with:
-          name: scraped-data-${{ github.run_id }}
-          path: data.csv
+          name: scraped-data-partial
+          path: data_partial.csv
 
   merge_csv:
     needs: scrape
     runs-on: ubuntu-latest
     steps:
-      - name: リポジトリをチェックアウト
-        uses: actions/checkout@v4
-
-      - name: Pythonのセットアップ
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
       - name: すべてのデータをダウンロード
         uses: actions/download-artifact@v4
         with:
           path: merged_data
 
       - name: CSV結合スクリプトを実行
-        run: |
-          python merge_csv.py
+        run: python merge_csv.py
 
       - name: 統合後のデータをアップロード
         uses: actions/upload-artifact@v4
