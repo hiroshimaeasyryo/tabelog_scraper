@@ -14,7 +14,7 @@ start_time = time.time()
 
 # 最大実行時間（秒単位）6時間より少し短く（5時間で保存）
 # 試験的に短めに設定
-MAX_EXECUTION_TIME = 1 * 10 * 60  # 10分
+MAX_EXECUTION_TIME = 1 * 20 * 60  # 20分
 
 def init_driver():
     """ヘッドレスChromeのドライバーを初期化"""
@@ -55,6 +55,13 @@ def scrape_detail_page_with_retry(url, max_retries=15):
             time.sleep(10)  # ページ読み込み待機
 
             record = {'URL': url, '店名': '', 'ジャンル': '', '予約・お問い合わせ': '', '住所': ''}
+
+            # ページのテキストを取得（タグを除いた純粋なテキスト部分のみ）
+            page_text = driver.find_element(By.TAG_NAME, "body").text
+            print("🔍 ページ全体のテキスト（デバッグ用）:")
+            print(page_text)
+            print("-" * 80)  # 区切り線
+
             try:
                 store_name = WebDriverWait(driver, 10).until(
                     EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="店名"]/following-sibling::td//span'))
