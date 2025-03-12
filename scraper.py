@@ -1,5 +1,6 @@
 import os
 import time
+import re
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -14,7 +15,7 @@ start_time = time.time()
 
 # 最大実行時間（秒単位）6時間より少し短く（5時間で保存）
 # 試験的に短めに設定
-MAX_EXECUTION_TIME = 1 * 20 * 60  # 20分
+MAX_EXECUTION_TIME = 1 * 20 * 60  # 10分
 
 def init_driver():
     """ヘッドレスChromeのドライバーを初期化"""
@@ -44,6 +45,12 @@ def scrape_search_page(driver, page_number):
         print(f"検索ページの読み込みエラー: {url} - {e}")
         return []
 
+def extract_phone_number(text):
+    """テキスト内から最初に見つかった電話番号を抽出"""
+    phone_pattern = re.compile(r'\d{2,4}-\d{2,4}-\d{4}')  # 例: 03-1234-5678, 0120-12-3456
+    match = phone_pattern.search(text)
+    return match.group(0) if match else "Not Found"
+
 def scrape_detail_page_with_retry(url, max_retries=15):
     """個別ページから情報を取得（最大15回リトライ）"""
     for attempt in range(max_retries):
@@ -54,49 +61,30 @@ def scrape_detail_page_with_retry(url, max_retries=15):
             driver.get(url)
             time.sleep(10)  # ページ読み込み待機
 
-            record = {'URL': url, '店名': '', 'ジャンル': '', '予約・お問い合わせ': '', '住所': ''}
+            record = {'URL': url, '店名': '', '電話番号': ''}
 
+            # ページタイトルを取得（店名として使用）
+            record['店名'] = driver.title.strip()
+            
             # ページのHTML全体を取得（タグ含む）
             page_html = driver.page_source
             print("📄 ページのHTML（デバッグ用）:")
             print(page_html)
             print("=" * 100)  # 区切り線
 
-            try:
-                store_name = WebDriverWait(driver, 10).until(
-                    EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="店名"]/following-sibling::td//span'))
-                )
-                record['店名'] = store_name.text.strip()
-            except:
-                record['店名'] = 'Not Found'
-            try:
-                genre = WebDriverWait(driver, 10).until(
-                    EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="ジャンル"]/following-sibling::td//span'))
-                )
-                record['ジャンル'] = genre.text.strip()
-            except:
-                record['ジャンル'] = 'Not Found'
-            try:
-                reservation = WebDriverWait(driver, 10).until(
-                    EC.visibility_of_element_located((By.XPATH, '//th[contains(text(),"予約・")]/following-sibling::td'))
-                )
-                record['予約・お問い合わせ'] = reservation.text.strip()
-            except:
-                record['予約・お問い合わせ'] = 'Not Found'
-            try:
-                address = WebDriverWait(driver, 10).until(
-                    EC.visibility_of_element_located((By.XPATH, '//th[normalize-space()="住所"]/following-sibling::td//p[contains(@class,"rstinfo-table__address")]'))
-                )
-                record['住所'] = address.text.strip()
-            except:
-                record['住所'] = 'Not Found'
+            # ページのテキストを取得（タグを除いた純粋なテキスト部分のみ）
+            page_text = driver.find_element(By.TAG_NAME, "body").text
+            print("🔍 ページ全体のテキスト（デバッグ用）:")
+            print(page_text)
+            print("-" * 80)  # 区切り線
+
+            # 正規表現で最初の電話番号を抽出
+            record['電話番号'] = extract_phone_number(page_text)
 
             # 取得した情報を逐一print
             print(f"URL: {record['URL']}")
             print(f"店名: {record['店名']}")
-            print(f"ジャンル: {record['ジャンル']}")
-            print(f"予約・お問い合わせ: {record['予約・お問い合わせ']}")
-            print(f"住所: {record['住所']}")
+            print(f"電話番号: {record['電話番号']}")
             print("-" * 40)
 
             driver.quit()
@@ -127,10 +115,7 @@ def compare_and_mark(new_df, old_df):
             url = row['URL']
             if url in old_df['URL'].values:
                 old_row = old_df[old_df['URL'] == url].iloc[0]
-                if (row['店名'] != old_row['店名'] or
-                    row['ジャンル'] != old_row['ジャンル'] or
-                    row['予約・お問い合わせ'] != old_row['予約・お問い合わせ'] or
-                    row['住所'] != old_row['住所']):
+                if row['店名'] != old_row['店名'] or row['電話番号'] != old_row['電話番号']:
                     new_df.at[idx, 'Status'] = 'Update'
             else:
                 new_df.at[idx, 'Status'] = 'New'
