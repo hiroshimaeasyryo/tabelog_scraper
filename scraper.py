@@ -15,7 +15,7 @@ start_time = time.time()
 
 # 最大実行時間（秒単位）6時間より少し短く（5時間で保存）
 # 試験的に短めに設定
-MAX_EXECUTION_TIME = 1 * 20 * 60  # 10分
+MAX_EXECUTION_TIME = 5 * 60 * 60  # 5時間
 
 def init_driver():
     """ヘッドレスChromeのドライバーを初期化"""
@@ -65,27 +65,12 @@ def scrape_detail_page_with_retry(url, max_retries=15):
 
             # ページタイトルを取得（店名として使用）
             record['店名'] = driver.title.strip()
-            
-            # ページのHTML全体を取得（タグ含む）
-            page_html = driver.page_source
-            print("📄 ページのHTML（デバッグ用）:")
-            print(page_html)
-            print("=" * 100)  # 区切り線
 
             # ページのテキストを取得（タグを除いた純粋なテキスト部分のみ）
             page_text = driver.find_element(By.TAG_NAME, "body").text
-            print("🔍 ページ全体のテキスト（デバッグ用）:")
-            print(page_text)
-            print("-" * 80)  # 区切り線
 
             # 正規表現で最初の電話番号を抽出
             record['電話番号'] = extract_phone_number(page_text)
-
-            # 取得した情報を逐一print
-            print(f"URL: {record['URL']}")
-            print(f"店名: {record['店名']}")
-            print(f"電話番号: {record['電話番号']}")
-            print("-" * 40)
 
             driver.quit()
             return record
